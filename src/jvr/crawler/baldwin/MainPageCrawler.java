@@ -8,4 +8,8 @@ package jvr.crawler.baldwin;
  * To change this template use File | Settings | File Templates.
  */
 public class MainPageCrawler {
+
+    public static void main(String args[]) {
+
+    }
 }
