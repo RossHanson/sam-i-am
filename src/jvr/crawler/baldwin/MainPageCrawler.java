@@ -22,13 +22,16 @@ import java.util.Iterator;
 public class MainPageCrawler {
 
 
-    private static String PAGE_URL = "http://www.mainlesson.com/displaybooksbytitle.php";
+    private static String PAGE_URL = "http://www.mainlesson.com/displaystoriesbytitle.php";
 
     public static void main(String args[]) throws IOException, ParserConfigurationException {
         Document titlePage = readPage(PAGE_URL);
-        Elements newsHeadlines = titlePage.select("body table tbody tr td table tbody tr td:nth-child(2) a");
+        Elements newsHeadlines = titlePage.select("body table tbody tr td table tbody tr td:nth-child(1) a");
         for (Iterator<Element> elements = newsHeadlines.iterator(); elements.hasNext();){
             System.out.println("Element is :" + elements.next().attr("href"));
+            TOCCrawler test = new TOCCrawler(elements.next().attr("href"));
+            test.downloadFile();
+            return;
         }
     }
 
