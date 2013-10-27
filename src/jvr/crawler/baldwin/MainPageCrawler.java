@@ -1,5 +1,17 @@
 package jvr.crawler.baldwin;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.util.Iterator;
+
 /**
  * Created with IntelliJ IDEA.
  * User: ross
@@ -9,7 +21,22 @@ package jvr.crawler.baldwin;
  */
 public class MainPageCrawler {
 
-    public static void main(String args[]) {
 
+    private static String PAGE_URL = "http://www.mainlesson.com/displaybooksbytitle.php";
+
+    public static void main(String args[]) throws IOException, ParserConfigurationException {
+        Document titlePage = readPage(PAGE_URL);
+        Elements newsHeadlines = titlePage.select("body table tbody tr td table tbody tr td:nth-child(2) a");
+        for (Iterator<Element> elements = newsHeadlines.iterator(); elements.hasNext();){
+            System.out.println("Element is :" + elements.next().attr("href"));
+        }
+    }
+
+
+
+    public static Document readPage(String uri) throws ParserConfigurationException, IOException {
+        Document doc = Jsoup.connect(uri).get();
+
+        return doc;
     }
 }

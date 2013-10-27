@@ -12,7 +12,6 @@ public class Engine {
     public static void main(String args[]){
         System.out.println("Hey! I compiled! Add some stuff");
         Parser parser;
-        parser.
 //        AbstractSequenceClassifier classifier;
     }
 }
