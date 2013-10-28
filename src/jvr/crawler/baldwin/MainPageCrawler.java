@@ -6,8 +6,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.Iterator;
@@ -29,9 +27,8 @@ public class MainPageCrawler {
         Elements newsHeadlines = titlePage.select("body table tbody tr td table tbody tr td:nth-child(1) a");
         for (Iterator<Element> elements = newsHeadlines.iterator(); elements.hasNext();){
             System.out.println("Element is :" + elements.next().attr("href"));
-            TOCCrawler test = new TOCCrawler(elements.next().attr("href"));
-            test.downloadFile();
-            return;
+            StoryScraper story = new StoryScraper(elements.next().attr("href"));
+            story.downloadFile();
         }
     }
 
