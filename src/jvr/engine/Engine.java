@@ -1,5 +1,6 @@
 package jvr.engine;
 
+import edu.stanford.nlp.parser.Parser;
 /**
  * Created with IntelliJ IDEA.
  * User: ross
@@ -10,5 +11,7 @@ package jvr.engine;
 public class Engine {
     public static void main(String args[]){
         System.out.println("Hey! I compiled! Add some stuff");
+        Parser parser;
+//        AbstractSequenceClassifier classifier;
     }
 }
