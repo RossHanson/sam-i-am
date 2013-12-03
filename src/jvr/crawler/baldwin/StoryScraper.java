@@ -39,7 +39,7 @@ public class StoryScraper {
     }
 
     /**
-     * Instantiates a new story scraper object with the given filename to output to and the url to download from
+     * Instantiates a new Story scraper object with the given filename to output to and the url to download from
      * @param fName    Output filename
      * @param url      Target url
      */
@@ -53,13 +53,13 @@ public class StoryScraper {
      * @param url Url of target
      * @return Encoded Filename
      */
-    private static String parseFName(String url){
+    public static String parseFName(String url){
         //Assume we have a php file w/ args
         return url.substring(url.lastIndexOf('?'));
     }
 
     /**
-     * Downloads and saves the story at this objects url
+     * Downloads and saves the Story at this objects url
      * @throws IOException Error connecting to page or writing to disk
      */
     public void downloadFile() throws IOException {
