@@ -3,6 +3,8 @@
  */
 package jvr.engine;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -41,10 +43,11 @@ public class Character {
 	 * @param nounClause
 	 */
 	public Character(String nounClause){
+		new WordTrainingSet(false); //Generates information about the known words in our collection.
 		this.name = findName(nounClause);
 		this.adjectives = findAdjectives(nounClause);
 		this.actions = findVerbs(nounClause);
-		//		setProbabilities();
+		setProbabilities();
 	}
 
 	//Getters
@@ -115,14 +118,14 @@ public class Character {
 	}
 
 	public void setProbabilities(){
-		Double adjPositivity = get_positivity(adjectives);
-		Double adjNegativity = 1-adjPositivity;
-		Double doPositivity = get_positivity(actions);
-		Double doNegativity = 1-doPositivity;
-		Double receivePositivity = get_positivity(receivedActions);
-		Double receiveNegativity = 1-receivePositivity;
-		probProtagonist = adjPositivity*adjectiveWeight+(doPositivity+receivePositivity)*verbWeight;
-		probAntagonist = adjNegativity*adjectiveWeight+(doNegativity+receiveNegativity)*verbWeight;
+		Double adjPositivity = get_itivity(adjectives, true);
+		Double adjNegativity = get_itivity(adjectives, false);
+		Double doPositivity = get_itivity(actions, true);
+		Double doNegativity = get_itivity(actions, false);
+		//		Double receivePositivity = get_positivity(receivedActions);
+		//		Double receiveNegativity = 1-receivePositivity;
+		//		probProtagonist = adjPositivity*adjectiveWeight+(doPositivity+receivePositivity)*verbWeight;
+		//		probAntagonist = adjNegativity*adjectiveWeight+(doNegativity+receiveNegativity)*verbWeight;
 	}
 
 
@@ -131,16 +134,24 @@ public class Character {
 	 * @param pos_or_neg
 	 * @return
 	 */
-	public Double get_positivity(SortedSet<String> sss){
+	public Double get_itivity(SortedSet<String> sss, boolean positive){
+		HashSet<String> word_set;
+		if (positive){
+			word_set = WordTrainingSet.positiveWords;
+		}else{
+			word_set = WordTrainingSet.negativeWords;	
+		}
 		Double total = (double) sss.size();
 		Double totalPos = 0.0;
 		for (String pos : sss){
-			if (SingleWordClassifier.classifyWord(pos)==1){
+			if (word_set.contains(pos)){
 				totalPos++;
 			}
 		}
 		return totalPos/total;
 	}
+
+
 
 	//for testing only.
 	public String toString(){
