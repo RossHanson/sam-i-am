@@ -43,7 +43,7 @@ public class WordTrainingSet {
 		while(!story.toLowerCase().equals("exit")){
 			while(st.hasMoreTokens()){
 				word = st.nextToken();
-				word.substring(word.indexOf(".")).toLowerCase();
+				if (word.indexOf(".")>-1) word.substring(word.indexOf(".")).toLowerCase();
 				if (!positiveWords.contains(word)&&!negativeWords.contains(word)){
 					System.out.println("Please enter 1 if the word \""+word+"\" is positive, 0 if it is a neutral word, and -1 otherwise");
 					pos_neg = in.nextLine();

@@ -4784,3 +4784,10 @@ zombiegoodbyegoodbye
 
 hunt
 wolf
+sorcerer
+punished
+destroyed
+destroying
+devour
+kick
+bite

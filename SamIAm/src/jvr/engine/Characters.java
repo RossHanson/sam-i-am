@@ -16,6 +16,7 @@ public class Characters {
 	public Characters(){
 		characters = new TreeMap<String, Character>(); //Character's name, all of its qualities are stored in the Character object which is the value.
 	}
+	
 	/**
 	 * Either adds the character to the map charactersAndSentiments if it is not
 	 * already in that map, or updates the character with newly found information

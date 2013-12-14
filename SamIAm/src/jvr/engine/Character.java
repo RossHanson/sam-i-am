@@ -21,18 +21,16 @@ public class Character {
 	private SortedSet<String> receivedActions;
 	private double probProtagonist;
 	private double probAntagonist;
-	private static final Double adjectiveWeight = 1.0; //might have to determine this empirically.
-	private static final Double verbWeight = 1.0;
+	private static final Double adjectiveWeight = 0.5; //might have to determine this empirically.
+	private static final Double verbWeight = 0.5;
 
 	public static void main(String[] arg){ //just for testing
-		new WordTrainingSet(false);
-//		String nounClause = "(NP (DT The) (JJ hungry) (JJ hungry) (JJ ravenous) (NN catepillar))";
 		String nounClause = " (NP (DT The) (JJ evil) (JJ good) (NN sorcerer))";
 		Character personaje = new Character(nounClause);
 		System.out.println("Original character: \n"+personaje.toString());
 		String nounClause2 = "(NP (PRP He)) (VP (VBN ruined) (NP (NN everything))";
 		personaje.updateCharacter(nounClause2);
-		String nounClause3 = "(NP (PRP He)) (VP (MD should) (VP (VB be) (VP (VBN punished)))";
+		String nounClause3 = "(NP (PRP He)) (VP (MD should) (VP (VB be) (VP (VBN punished) (VBN destroyed)))";
 		personaje.updateCharacter(nounClause3);
 		System.out.println("Updated character: \n"+personaje.toString());
 	}
@@ -110,22 +108,25 @@ public class Character {
 	public void updateReceivedActions(String verbClause){
 		SortedSet<String> actions = findVerbs(verbClause);
 		receivedActions.addAll(actions);
+		setProbabilities();
 	}
 
 	public void updateCharacter(String nounClause){
 		adjectives.addAll(findAdjectives(nounClause));
 		actions.addAll(findVerbs(nounClause));
+		setProbabilities();
 	}
-
+	
+	//Note that the probabilities of being a protagonist/antagonist will not necessarily add to 1. There is a lot of 
+	// uncertainty about whether or not the character is just a neutral character. The difference in positivity/negativity 
+	// and 1 represents the probability that the character is just neutral.
 	public void setProbabilities(){
-		Double adjPositivity = get_itivity(adjectives);
-		Double adjNegativity = 1.0-adjPositivity;
-		Double doPositivity = get_itivity(actions);
-		Double doNegativity = 1.0-doPositivity;
-		//		Double receivePositivity = get_positivity(receivedActions);
-		//		Double receiveNegativity = 1-receivePositivity;
-		probProtagonist = adjPositivity*adjectiveWeight+(doPositivity)*verbWeight;//+receivePositivity)*verbWeight;
-		probAntagonist = adjNegativity*adjectiveWeight+(doNegativity)*verbWeight;//+receiveNegativity)*verbWeight;
+		Double adjPositivity = get_itivity(true);
+		Double adjNegativity = get_itivity(false);
+		Double doPositivity = get_itivity(true);
+		Double doNegativity = get_itivity(false);
+		probProtagonist = (0.5*adjPositivity) + (0.5*doPositivity);//*adjectiveWeight+(doPositivity)*verbWeight;//+receivePositivity)*verbWeight;
+		probAntagonist = (0.5*adjNegativity) + (0.5*doNegativity);
 	}
 
 	/**
@@ -134,20 +135,18 @@ public class Character {
 	 * @param pos_or_neg
 	 * @return
 	 */
-	public Double get_itivity(SortedSet<String> sss){
-		Double numPos = 0.0;
-		Double numNeg = 0.0;
-		HashSet<String> posWordSet = WordTrainingSet.positiveWords;
-		HashSet<String> negWordSet = WordTrainingSet.negativeWords;	
+	public Double get_itivity(boolean positive){
+		SortedSet<String> sss = actions;
+		sss.addAll(adjectives);
+		Double num = 0.0;
+		Double total = (double) sss.size();
+		HashSet<String> wordSet = positive? WordTrainingSet.positiveWords : WordTrainingSet.negativeWords;
 		for (String pos : sss){
-			System.out.println(pos);
-			if (posWordSet.contains(pos)){
-				numPos++;
-			}if (negWordSet.contains(pos)){
-				numNeg++;
+			if (wordSet.contains(pos)){
+				num++;
 			}
 		}
-		return numPos/Math.max(1.0,numPos+numNeg);
+		return num/Math.max(1.0,total);
 	}
 
 	//for testing only.
@@ -155,6 +154,6 @@ public class Character {
 		return ("Name: "+this.name+"\nAdjectives: "+this.adjectives.toString()+
 				"\nActions: "+this.actions.toString()+"\nProbability that is a protagonist: "
 				+probProtagonist+"\nProbability that is a antagonist: "+probAntagonist
-				/*+"\nReceived Actions; "+this.receivedActions.toString()*/);
+				/*+"\nReceived Actions; "+this.receivedActions.toString()*/+"\n");
 	}
 }
