@@ -42,8 +42,7 @@ public class WordTrainingSet {
 		FileWriter negWriter = new FileWriter(neg_words,true);
 		while(!story.toLowerCase().equals("exit")){
 			while(st.hasMoreTokens()){
-				word = st.nextToken();
-				if (word.indexOf(".")>-1) word.substring(word.indexOf(".")).toLowerCase();
+				word = removePeriods(st.nextToken().toLowerCase());
 				if (!positiveWords.contains(word)&&!negativeWords.contains(word)){
 					System.out.println("Please enter 1 if the word \""+word+"\" is positive, 0 if it is a neutral word, and -1 otherwise");
 					pos_neg = in.nextLine();
@@ -68,6 +67,19 @@ public class WordTrainingSet {
 		in.close();
 		posWriter.close();
 		negWriter.close();
+	}
+	
+	private static String removePeriods(String story){
+		String removed = "";
+		int current_index = 0;
+		int index = story.indexOf(".");
+		while (current_index < story.length() && index > -1){
+			removed = removed+story.substring(current_index, index);
+			index = story.indexOf(".");
+			current_index = index+1;
+		}
+		removed = removed+story.substring(current_index);
+		return removed;
 	}
 
 	public static void addWordsToMap (String posDir, String negDir) throws IOException{
