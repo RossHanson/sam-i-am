@@ -1,5 +1,6 @@
 package jvr.engine;
 
+import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeGraphNode;
 
@@ -12,11 +13,13 @@ import java.util.*;
  * Time: 4:08 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Action implements Comparable<Action>{
-    private Character subject;
-    private Character object;
-    private Tree action;
-    public ActionType type;
+public class Action extends  Relation implements Comparable<Action>{
+//    private Character subject;
+//    private Character object;
+    private IndexedWord action;
+    private Set<IndexedWord> decorators = new HashSet<IndexedWord>();
+//    public ActionType type;
+
 
 
     private static int ACTION_COUNT = 0;
@@ -36,12 +39,20 @@ public class Action implements Comparable<Action>{
      * @param action
      * @param type
      */
-    public Action(Character subject, Character object, Tree action, ActionType type){
+    public Action(Character subject, Character object, IndexedWord action, ActionType type){
         this.subject = subject;
         this.object = object;
         this.action = action;
         this.type = type;
         this.actionId = getActionId();
+    }
+
+    public Action(Character subject, Character object, IndexedWord action, List<IndexedWord> decorators){
+        this.subject = subject;
+        this.object = object;
+        this.action = action;
+        this.type = ActionType.NEUTRAL;
+        this.decorators.addAll(decorators);
     }
 
     /**
@@ -50,7 +61,7 @@ public class Action implements Comparable<Action>{
      * @param object
      * @param action
      */
-    public Action(Character subject, Character object, Tree action){
+    public Action(Character subject, Character object, IndexedWord action){
         this.subject = subject;
         this.object = object;
         this.action = action;
@@ -63,9 +74,9 @@ public class Action implements Comparable<Action>{
      * @param actions
      * @return count
      */
-    public static int countTotalActions(Map<Character,? extends  Collection<Action>> actions){ //God I hate generics syntax
+    public static int countTotalActions(Map<Character,? extends  Collection<Relation>> actions){ //God I hate generics syntax
         int i = 0;
-        for (Collection<Action> set: actions.values()){
+        for (Collection<Relation> set: actions.values()){
             i += set.size();
         }
         return i;
@@ -77,7 +88,7 @@ public class Action implements Comparable<Action>{
      * @param targetType
      * @return
      */
-    public static int getActionTypeCount(Map<Character,SortedSet<Action>> actions, ActionType targetType){
+    public static int getActionTypeCount(Map<Character,SortedSet<Relation>> actions, ActionType targetType){
         return countTotalActions(getActionsOfType(actions, targetType));
     }
 
@@ -87,15 +98,15 @@ public class Action implements Comparable<Action>{
      * @param targetType
      * @return
      */
-    public static Map<Character,SortedSet<Action>> getActionsOfType(Map<Character, SortedSet<Action>> actions, ActionType targetType){
-        Map<Character,SortedSet<Action>> targetActions = new HashMap<Character,SortedSet<Action>>();
-        for (Map.Entry<Character, SortedSet<Action>> entry: actions.entrySet()){
+    public static Map<Character,SortedSet<Relation>> getActionsOfType(Map<Character, SortedSet<Relation>> actions, ActionType targetType){
+        Map<Character,SortedSet<Relation>> targetActions = new HashMap<Character,SortedSet<Relation>>();
+        for (Map.Entry<Character, SortedSet<Relation>> entry: actions.entrySet()){
             SortedSet actionSet = targetActions.get(entry.getKey());
             if (actionSet ==null){
                 actionSet = new TreeSet<Action>();
                 targetActions.put(entry.getKey(),actionSet);
             }
-            for (Action a: entry.getValue()){
+            for (Relation a: entry.getValue()){
                 if (a.type==targetType)
                     actionSet.add(a);
             }
@@ -112,31 +123,47 @@ public class Action implements Comparable<Action>{
         return this.object;
     }
 
-    public Tree getAction(){
+    public IndexedWord getAction(){
         return this.action;
     }
 
-    public static String prettyPrint(Map<Character,? extends Collection<Action>> actions){
+    public String getValue(){
+        return this.action.lemma();
+    }
+
+    public ActionType getType(){
+        return this.type;
+    }
+
+    public double getWeight(){
+        return 1.0;
+    }
+
+    public static String prettyPrint(Map<Character,? extends Collection<Relation>> actions){
         if (actions.isEmpty())
             return "None\n";
         StringBuffer sb = new StringBuffer();
-        for (Map.Entry<Character, ? extends  Collection<Action>> e: actions.entrySet()){
+        for (Map.Entry<Character, ? extends  Collection<Relation>> e: actions.entrySet()){
             Character c = e.getKey();
-            Collection<Action> cActions = e.getValue();
+            Collection<Relation> cActions = e.getValue();
             if (cActions.isEmpty())
                 continue;
             sb.append("The following actions are associated with character: ").append(c.getName()).append("\n");
-            for (Action a: cActions){
-                sb.append("Action: ").append(a.action.firstChild().value()).append("\n");
+            for (Relation a: cActions){
+                sb.append("Action: ").append(a.getValue()).append("\n");
             }
         }
         return sb.toString();
     }
 
-    public void notifyParticipants(){
-        subject.registerDeliveredAction(this);
-        object.registerReceivedAction(this);
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("Subject: ").append(this.subject.getName()).append("\n");
+        sb.append("Relation: ").append(this.action.value()).append("\n");
+        sb.append("Object: ").append(this.object.getName());
+        return sb.toString();
     }
+
 
     @Override
     public int compareTo(Action a) {

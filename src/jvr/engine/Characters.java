@@ -135,8 +135,8 @@ public class Characters {
 						if (!affectedCharacters.isEmpty() && !receivedActions.isEmpty() && !(perpetrator==null)){//Someone was actually affected.
                             for (Tree actionTree: receivedActions){
                                 for (Tree characterTree: affectedCharacters){
-                                    Action a = new Action(perpetrator,resolveCharacter(characterTree),actionTree,Action.ActionType.NEUTRAL);
-                                    a.notifyParticipants();
+//                                    Action a = new Action(perpetrator,resolveCharacter(characterTree),actionTree,Action.ActionType.NEUTRAL);
+//                                    a.notifyParticipants();
                                 }
                             }
 //							manageAffectedCharacters(affectedCharacters, receivedActions, perpetrator.getName());
@@ -152,21 +152,6 @@ public class Characters {
 		}
 	}
 
-//	/**
-//	 * Calls handleReceivedActions from Character.java to add the ArrayList
-//	 * of actions that this Character has received to its positiveReceivedActions
-//	 * and negativeReceivedActions fields.
-//	 * @param affectedCharacters
-//	 * @param receivedActions
-//	 * @param perpetrator
-//	 */
-//	private void manageAffectedCharacters(ArrayList<String> affectedCharacters,
-//			ArrayList<String> receivedActions, String perpetrator) {
-//		for (String characterName : affectedCharacters){
-//			characters.get(characterName).handleReceivedActions(receivedActions, perpetrator);
-//		}
-//
-//	}
 
 	/**
 	 * Either adds the character to the map charactersAndSentiments if it is not
@@ -209,13 +194,13 @@ public class Characters {
 	 */
 	public void twoNegativesMakeAPositive (){
 		for (Character personnage : characters.values()){
-			Map<Character, SortedSet<Action>> negativeActions= personnage.getNegativeReceivedActions();
+			Map<Character, SortedSet<Relation>> negativeActions= personnage.getNegativeReceivedActions();
 			Character perpetrator;
-			SortedSet<Action> actions;
+			SortedSet<Relation> actions;
 			for (Character perp : negativeActions.keySet()){
 				perpetrator = characters.get(perp);
 				actions = negativeActions.get(perp);
-				for (Action act : actions){
+				for (Relation act : actions){
 					System.out.println("act: "+act);
 					if (personnage.getProbAntagonist()>personnage.getProbProtagonist()){
 							perpetrator.moveNegativeActionToPositive(act);

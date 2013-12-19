@@ -2,6 +2,7 @@ package jvr.engine;
 
 import java.util.*;
 
+import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.trees.Tree;
 
 import jvr.parser.BasicParserFunctionality;
@@ -11,19 +12,21 @@ import jvr.parser.BasicParserFunctionality;
  */
 public class Character {
 	public String name;
+    private IndexedWord mainWord;
+    private List<IndexedWord> modifiers;
+
 	private SortedSet<String> positiveAdjectives = new TreeSet<String>();
 	private SortedSet<String> negativeAdjectives = new TreeSet<String>();
 
-    private HashMap<Character,SortedSet<Action>> deliveredActions = new HashMap<Character,SortedSet<Action>>();
-    private Map<Character, SortedSet<Action>> receivedActions = new HashMap<Character, SortedSet<Action>>();
+    private Map<Character,SortedSet<Relation>> deliveredActions = new HashMap<Character,SortedSet<Relation>>();
+    private Map<Character, SortedSet<Relation>> receivedActions = new HashMap<Character, SortedSet<Relation>>();
 
-//	private SortedSet<String> positiveDeliveredActions = new TreeSet<String>();
-//	private SortedSet<String> negativeDeliveredActions = new TreeSet<String>();
-//	private SortedMap<String, SortedSet<String>> positiveReceivedActions = new TreeMap<String, SortedSet<String>>();//key Character is the perpetrator of the value, value SortedSet<String> represents the verbs.
-//	private SortedMap<String, SortedSet<String>> negativeReceivedActions = new TreeMap<String, SortedSet<String>>();
 	private Integer occurrences; //represents the number of times this character appears in the story.
 	private double probProtagonist;
 	private double probAntagonist;
+
+    private int ID;
+    private static int TOTAL_COUNT = 0;
 
 	/**
 	 * Given a nounClause containing a character's name and possibly
@@ -36,7 +39,44 @@ public class Character {
 		findAdjectives(nounPhrase);
 		setProbabilities();
 		occurrences = 1;
+        this.ID = getID();
 	}
+
+    private static synchronized  int getID(){
+        int id = TOTAL_COUNT;
+        TOTAL_COUNT++;
+        return id;
+    }
+
+    public IndexedWord getMainWord(){
+        return mainWord;
+    }
+
+    public static Character createCharacter(IndexedWord word){
+        return createCharacter(word, new LinkedList<IndexedWord>());
+    }
+
+    public static Character createCharacter(IndexedWord word, List<IndexedWord> nounModifiers){
+        StringBuilder sb = new StringBuilder();
+        if (nounModifiers!=null){
+            for (IndexedWord w: nounModifiers)
+                sb.append(w.lemma()).append(" ");
+        }
+        sb.append(word.lemma());
+        return new Character(word, nounModifiers, sb.toString());
+    }
+
+    private Character(IndexedWord word, List<IndexedWord> nounModifiers, String name){
+        this.mainWord = word;
+        this.modifiers = nounModifiers;
+        this.name = name;
+        this.ID = getID();
+    }
+
+    public void addModifier(IndexedWord modifier){
+        this.modifiers.add(modifier);
+        this.name = modifier.lemma() + " " + this.name;
+    }
 
 	/**
 	 * Updates the adjectives and actions of this character.
@@ -53,6 +93,25 @@ public class Character {
 //		if (!(actions==null)) handleActions(actions);
 		setProbabilities();
 	}
+
+    public boolean isSameCharacter(Character c){
+        return isSameCharacter(c,false);
+    }
+
+    public boolean isSameCharacter(Character c, boolean strict){
+        boolean result =  c.mainWord.lemma().equals(this.mainWord.lemma());
+        if (result && strict){
+            for (IndexedWord wC: c.modifiers){
+                boolean containsMod = false;
+                for (IndexedWord wMe: this.modifiers){
+                    containsMod = containsMod || wMe.lemma().equals(wC.lemma());
+                }
+                if (!containsMod)
+                    return false;
+            }
+        }
+        return result;
+    }
 
 	/**
 	 * Returns the name of this Character. It is assumed that the noun phrase
@@ -93,58 +152,8 @@ public class Character {
 		}
 	}
 
-	/**
-	 * Adds all classifiable (in terms of sentiment) actions of a character to 
-	 * the appropriate sets.
-	 * @param actions
-	 */
-//	public void handleActions(ArrayList<Tree> actions){
-//		for (Tree action : actions){
-//			if (WordTrainingSet.positiveWords.contains(action)){
-//                deliveredActions.put(null, new Action(null, ))
-//				positiveDeliveredActions.add(action);
-//			}
-//			if (WordTrainingSet.negativeWords.contains(action)){
-//				negativeDeliveredActions.add(action);
-//			}
-//		}
-//	}
 
-//	/**
-//	 * Adds all classifiable (in terms of sentiment) actions that this character
-//	 * receives to the appropriate sets. Also records the Character who
-//	 * is the perpetrator of these actions.
-//	 * @param receivedActions
-//     * @param perpetrator
-//	 */
-//	public void handleReceivedActions(ArrayList<String> receivedActions, String perpetrator){
-//		SortedSet<String> tempPositive = new TreeSet<String>();
-//		SortedSet<String> tempNegative = new TreeSet<String>();
-//		for (String action : receivedActions){
-//			if (WordTrainingSet.positiveWords.contains(action)){
-//				tempPositive.add(action);
-//			}
-//			if (WordTrainingSet.negativeWords.contains(action)){
-//				tempNegative.add(action);
-//			}
-//		}
-//		if (!tempPositive.isEmpty()){
-//			if (!positiveReceivedActions.containsKey(perpetrator)){
-//				positiveReceivedActions.put(perpetrator, tempPositive);
-//			}
-//			if (!positiveReceivedActions.containsKey(perpetrator)){
-//				positiveReceivedActions.get(perpetrator).addAll(tempPositive);
-//			}
-//		}
-//		if (!tempNegative.isEmpty()){
-//			if (!negativeReceivedActions.containsKey(perpetrator)){
-//				negativeReceivedActions.put(perpetrator, tempNegative);
-//			}
-//			if(negativeReceivedActions.containsKey(perpetrator)){
-//				negativeReceivedActions.get(perpetrator).addAll(tempNegative);
-//			}
-//		}
-//	}
+
 
 	/**
 	 * Called when a Character does something negative to a negative
@@ -152,7 +161,7 @@ public class Character {
 	 * Called in a case like "The good girl killed the evil witch."
 	 * @param action
 	 */
-	public void moveNegativeActionToPositive(Action action){
+	public void moveNegativeActionToPositive(Relation action){
         action.type = Action.ActionType.POSITIVE;
 //		if (negativeDeliveredActions.contains(action)){//just to be safe
 //			negativeDeliveredActions.remove(action);
@@ -209,46 +218,50 @@ public class Character {
 		return this.probAntagonist;
 	}
 
-    public void registerReceivedAction(Action a){
+    public void registerReceivedAction(Relation a){
         Character perp = a.getSubject();
-        SortedSet<Action> actions = this.receivedActions.get(perp);
+        SortedSet<Relation> actions = this.receivedActions.get(perp);
         if (actions == null){
-            actions = new TreeSet<Action>();
+            actions = new TreeSet<Relation>();
             this.receivedActions.put(perp,actions);
         }
         actions.add(a);
     }
 
-    public void registerDeliveredAction(Action a){
+    public void registerDeliveredAction(Relation a){
         Character victim = a.getObject();
-        SortedSet<Action> actions = this.deliveredActions.get(victim);
+        SortedSet<Relation> actions = this.deliveredActions.get(victim);
         if (actions == null){
-            actions = new TreeSet<Action>();
+            actions = new TreeSet<Relation>();
             this.deliveredActions.put(victim,actions);
         }
         actions.add(a);
     }
 
-	public Map<Character, SortedSet<Action>> getPositiveDeliveredActions(){
+	public Map<Character, SortedSet<Relation>> getPositiveDeliveredActions(){
 		return Action.getActionsOfType(deliveredActions, Action.ActionType.POSITIVE);
 	}
 
 
-	public Map<Character, SortedSet<Action>> getNegativeDeliveredActions(){
+	public Map<Character, SortedSet<Relation>> getNegativeDeliveredActions(){
         return Action.getActionsOfType(deliveredActions, Action.ActionType.POSITIVE);
 	}
 
-	public Map<Character, SortedSet<Action>> getPositiveReceivedActions(){
+	public Map<Character, SortedSet<Relation>> getPositiveReceivedActions(){
         return Action.getActionsOfType(receivedActions, Action.ActionType.POSITIVE);
 	}
 
-    public Map<Character, SortedSet<Action>> getNegativeReceivedActions(){
+    public Map<Character, SortedSet<Relation>> getNegativeReceivedActions(){
         return Action.getActionsOfType(receivedActions, Action.ActionType.NEGATIVE);
     }
 	
 	public void incrementOccurrences(){
 		this.occurrences = this.occurrences + 1;
 	}
+
+    public boolean equals(Character c){
+        return this.ID == c.ID;
+    }
 
 	//for testing only.
 	public String toString(){

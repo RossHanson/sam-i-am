@@ -2,14 +2,18 @@ package jvr.parser;
 
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.trees.*;
 import jvr.content.RawStory;
+import jvr.content.TrainingStory;
 
 import java.io.StringReader;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
 
 
@@ -32,53 +36,27 @@ public class StanfordParser extends StoryParser{
 	 */
 //////////////////////LOOK ABOVE!////////////////////////
 	public static void main(String[] arg){
-		Scanner in = new Scanner(System.in);
-		System.out.println("Please enter the sentence you want to have analyzed.");
-		String story = in.nextLine();
-		StanfordParser sp = new StanfordParser();
-		while (!story.toLowerCase().equals("exit")){
-			Tree parse = sp.parseStory(story);
-			System.out.println(parse);
-			for (Tree subtree: parse){
-				if(subtree.label().value().equals("NN")){
-                    //To implement
-				}
-			}
-			System.out.println("Would you like to parse another sentence? If so, enter the sentence. If not, enter \"exit.\"");
-			story = in.nextLine();
-		}
-		in.close();
+        System.out.println("Use enginge.java instead");
 	}
 
-	private static StanfordParser parser;
 
-	private LexicalizedParser lp;
-
-
-
-
+	private StanfordCoreNLP pipeline;
 
 	public StanfordParser(){
-		lp = LexicalizedParser.loadModel(); //Should load the default grammar
-
-
-
+        Properties props = new Properties();
+        props.put("annotators", "tokenize, ssplit, pos, lemma, ner, parse");
+		pipeline= new StanfordCoreNLP(props);
 	}
 
-    public Tree[] parseStory(RawStory story){
-        String[] contents = story.getContents().split("\\.|\\?");
-        Tree[] trees = new Tree[contents.length];
-        for (int i = 0; i< contents.length;i++){
-            trees[i] = parseStory(contents[i]);
-        }
-        return trees;
+    public TrainingStory parseStory(RawStory story){
+        Annotation document = parseStory(story.getContents());
+        return new TrainingStory(document);
     }
 
-	public Tree parseStory(String content){
-		TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
-		List<CoreLabel> rawWords = tokenizerFactory.getTokenizer(new StringReader(content.toLowerCase())).tokenize();
-
-		return lp.apply(rawWords);
+	public Annotation parseStory(String content){
+        Annotation document = new Annotation(content);
+        pipeline.annotate(document);
+        return document;
 	}
 
     public TreeGraphNode getSentenceSubject(Tree parsedSentence){
@@ -86,11 +64,8 @@ public class StanfordParser extends StoryParser{
         return EnglishGrammaticalStructure.getSubject(egs.root());
     }
 
-	public static StanfordParser getInstance(){
-		if (parser==null)
-			parser = new StanfordParser();
-		return parser;
-	}
+
+
 
 
 }

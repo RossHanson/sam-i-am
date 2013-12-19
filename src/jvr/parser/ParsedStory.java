@@ -1,5 +1,7 @@
 package jvr.parser;
 
+import edu.stanford.nlp.pipeline.Annotation;
+
 /**
  * Created with IntelliJ IDEA.
  * User: ross
@@ -8,6 +10,8 @@ package jvr.parser;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class ParsedStory {
+
+
 
 
     public abstract void printStructure();

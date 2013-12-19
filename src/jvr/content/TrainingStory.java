@@ -1,9 +1,11 @@
 package jvr.content;
 
-import edu.stanford.nlp.trees.GrammaticalStructure;
-import edu.stanford.nlp.trees.Tree;
-import edu.stanford.nlp.trees.TreePrint;
-import edu.stanford.nlp.trees.TypedDependency;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
+import edu.stanford.nlp.trees.*;
+import edu.stanford.nlp.util.CoreMap;
 import jvr.parser.ParsedStory;
 
 import java.util.List;
@@ -17,24 +19,43 @@ import java.util.List;
  */
 public class TrainingStory extends ParsedStory {
 
-    private Tree parsedSentence;
-    private GrammaticalStructure gs;
-    private List<TypedDependency> tdl;
 
-    public TrainingStory(Tree parsedSentence, GrammaticalStructure gs, List<TypedDependency> tdl){
-        this.parsedSentence = parsedSentence;
-        this.gs = gs;
-        this.tdl = tdl;
+    private Annotation document;
+    private List<CoreMap> sentences;
 
+    public TrainingStory(Annotation document){
+        this.document = document;
+        this.sentences = document.get(CoreAnnotations.SentencesAnnotation.class);
+
+    }
+
+    public Tree[] getTrees(){
+        Tree[] trees = new Tree[sentences.size()];
+        int i = 0;
+        for (CoreMap c: sentences){
+            trees[i] = c.get(TreeCoreAnnotations.TreeAnnotation.class);
+            i++;
+        }
+        return trees;
+    }
+
+    public SemanticGraph[] getGraphs(){
+        SemanticGraph[] graphs = new SemanticGraph[sentences.size()];
+        int i = 0;
+        for (CoreMap c: sentences){
+            graphs[i] = c.get(SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation.class);
+            i++;
+        }
+        return graphs;
     }
 
     public void printStructure(){
         TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
-        System.out.println("======");
-        System.out.println(tdl);
-        System.out.println();
-        tp.printTree(parsedSentence);
-        System.out.println("======");
+        for (Tree t: this.getTrees()){
+            System.out.println("======");
+            tp.printTree(t);
+            System.out.println("======");
+        }
     }
 
 
