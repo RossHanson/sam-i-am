@@ -11,6 +11,8 @@ import jvr.content.RawStory;
  */
 public class TestStory extends RawStory {
 
+    private static final String PUNCTATION_REGEX = "[!?]";
+
 
     public TestStory(){
         title = "Test Story";
@@ -21,6 +23,28 @@ public class TestStory extends RawStory {
                 " fields or down the land, but don't go into Mr. McGregor's garden."+
                 " your father had an accident there; and he was put in a pie by Mrs. McGregor. Accidental \"";
     }
+
+    public TestStory(String title, String contents){
+        this.title = title;
+        this.contents = contents;
+    }
+
+
+    /**
+     * Add a sentence to the existing contents string. Please try to include punctation as it is not automatically added
+     * at the moment
+     * @param sentence Sentence to add
+     */
+    public void addSentence(String sentence){
+        this.contents = this.contents + sentence;
+    }
+
+    private static String[] processContentString(String content){
+        content = content.replaceAll(PUNCTATION_REGEX,".");
+        return content.split(".");
+    }
+
+
 
     public String getContents(){
         return contents;

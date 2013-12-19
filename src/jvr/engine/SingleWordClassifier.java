@@ -17,8 +17,8 @@ import java.util.Set;
 public class SingleWordClassifier {
 
 
-    private static final String NEGATIVE_WORD_FNAME="data/single_word_list/negative-words.txt";
-    private static final String POSITIVE_WORD_FNAME="data/single_word_list/positive-words.txt";
+    private static final String NEGATIVE_WORD_FNAME="/home/ross/Projects/BookReader/data/single_word_lists/negative-words.txt";
+    private static final String POSITIVE_WORD_FNAME="/home/ross/Projects/BookReader/data/single_word_lists/positive-words.txt";
 
     private Set<String> positiveWords = new HashSet<String>();
     private Set<String> negativeWords = new HashSet<String>();
@@ -38,9 +38,10 @@ public class SingleWordClassifier {
 
     private void iterateAndBuildSet(File targetReader, Set<String> targetSet) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(targetReader));
-        String line;
-        while((line = br.readLine()) != null){
+        String line = br.readLine();
+        while(line != null){
             targetSet.add(line);
+            line = br.readLine();
         }
     }
 
@@ -49,6 +50,16 @@ public class SingleWordClassifier {
             instance = new SingleWordClassifier(POSITIVE_WORD_FNAME,NEGATIVE_WORD_FNAME);
         }
         return instance;
+    }
+
+    public int checkWordStatus(String word){
+        word = word.toLowerCase();
+        if (negativeWords.contains(word))
+            return -1;
+        if (positiveWords.contains(word))
+            return 1;
+        return 0;
+
     }
 
 }

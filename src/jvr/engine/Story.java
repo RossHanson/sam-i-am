@@ -121,11 +121,16 @@ public class Story {
 				"mother in a sand-bank underneath the root of a very big fir tree."+
 		"\"Now, my dears\", said old Mrs. Rabbit one morning, \"You may go into the"+
 				" fields or down the land, but don't go into Mr. McGregor's garden."+
-		" your father had an accident there; and he was put in a pie by Mrs. McGregor.\"";
-		SortedMap<Integer, String> sts = storyToSentences(story);
-		System.out.println(sts.toString()+"\n");
-		SortedMap<Integer, SortedMap<String, Integer>> sti = sentences2words2Integers(sts);
-		System.out.println(sti.toString()+"\n");
+		" your father had an accident there; and he was put in a pie by Mrs. McGregor. Accidental \"";
+
+        SingleWordClassifier swc = SingleWordClassifier.getInstance();
+        String reducedStory = story.replace(",","");
+        String[] words = reducedStory.split(" ");
+        for (String w: words){
+            int rating = swc.checkWordStatus(w);
+            System.out.println("Word: " + w + " | Rating: " + rating);
+        }
+
 		
 	}
 

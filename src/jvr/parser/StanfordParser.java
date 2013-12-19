@@ -7,47 +7,90 @@ import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.trees.*;
 import jvr.content.RawStory;
-import jvr.content.TrainingStory;
 
 import java.io.StringReader;
 import java.util.List;
+import java.util.Scanner;
 
-/**
- * Created with IntelliJ IDEA.
- * User: ross
- * Date: 12/7/13
- * Time: 11:08 AM
- * To change this template use File | Settings | File Templates.
- */
+
 public class StanfordParser extends StoryParser{
+//////////////////////LOOK BELOW!//////////////////////////
+	/*Example strings you can pass in separated across lines: 
+	  The wicked witch hit the little girl.
+	  The little girl cried out.
+	  The wolf likes to bite little children.
+	  The wolf is mean.
+	  The witch and the wolf are friends.
+	  The beautiful princess killed the evil witch.
+	 */
+	//You can also use:
+	/*
+	  The wizard walked outside. 
+	  He liked the snow. 
+	  The wizard lied to the little girl. 
+	  The wolf ate the sad girl.
+	 */
+//////////////////////LOOK ABOVE!////////////////////////
+	public static void main(String[] arg){
+		Scanner in = new Scanner(System.in);
+		System.out.println("Please enter the sentence you want to have analyzed.");
+		String story = in.nextLine();
+		StanfordParser sp = new StanfordParser();
+		while (!story.toLowerCase().equals("exit")){
+			Tree parse = sp.parseStory(story);
+			System.out.println(parse);
+			for (Tree subtree: parse){
+				if(subtree.label().value().equals("NN")){
+                    //To implement
+				}
+			}
+			System.out.println("Would you like to parse another sentence? If so, enter the sentence. If not, enter \"exit.\"");
+			story = in.nextLine();
+		}
+		in.close();
+	}
+
+	private static StanfordParser parser;
+
+	private LexicalizedParser lp;
 
 
-    private static StanfordParser parser;
 
-    private LexicalizedParser lp;
 
-    private StanfordParser(){
-        lp = LexicalizedParser.loadModel(); //Should load the default grammar
+
+	public StanfordParser(){
+		lp = LexicalizedParser.loadModel(); //Should load the default grammar
+
+
+
+	}
+
+    public Tree[] parseStory(RawStory story){
+        String[] contents = story.getContents().split("\\.|\\?");
+        Tree[] trees = new Tree[contents.length];
+        for (int i = 0; i< contents.length;i++){
+            trees[i] = parseStory(contents[i]);
+        }
+        return trees;
     }
 
-    public TrainingStory parseStory(String content){
+	public Tree parseStory(String content){
+		TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
+		List<CoreLabel> rawWords = tokenizerFactory.getTokenizer(new StringReader(content.toLowerCase())).tokenize();
 
-        TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
-        List<CoreLabel> rawWords = tokenizerFactory.getTokenizer(new StringReader(content)).tokenize();
-        Tree parse = lp.apply(rawWords);
+		return lp.apply(rawWords);
+	}
 
-        TreebankLanguagePack tlp = new PennTreebankLanguagePack();
-        GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-        GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
-        List<TypedDependency> tdl = gs.typedDependenciesCCprocessed();
-        return new TrainingStory(parse,gs,tdl);
+    public TreeGraphNode getSentenceSubject(Tree parsedSentence){
+        EnglishGrammaticalStructure egs = new EnglishGrammaticalStructure(parsedSentence);
+        return EnglishGrammaticalStructure.getSubject(egs.root());
     }
 
-    public static StanfordParser getInstance(){
-        if (parser==null)
-            parser = new StanfordParser();
-        return parser;
-    }
+	public static StanfordParser getInstance(){
+		if (parser==null)
+			parser = new StanfordParser();
+		return parser;
+	}
 
 
 }

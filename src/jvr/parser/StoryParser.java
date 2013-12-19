@@ -1,5 +1,6 @@
 package jvr.parser;
 
+import edu.stanford.nlp.trees.Tree;
 import jvr.content.RawStory;
 
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.io.IOException;
 public abstract class StoryParser {
 
 
-    public abstract ParsedStory parseStory(String content) throws IOException;
+    public abstract Tree parseStory(String content) throws IOException;
 
 
 
