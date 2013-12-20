@@ -1,8 +1,8 @@
 package jvr.engine;
 
 import edu.stanford.nlp.ling.IndexedWord;
-import edu.stanford.nlp.trees.Tree;
-import edu.stanford.nlp.trees.TreeGraphNode;
+import jvr.graph.Relation;
+import jvr.graph.Vertex;
 
 import java.util.*;
 
@@ -13,9 +13,9 @@ import java.util.*;
  * Time: 4:08 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Action extends  Relation implements Comparable<Action>{
-//    private Character subject;
-//    private Character object;
+public class Action extends Relation implements Comparable<Action>{
+//    private Vertex subject;
+//    private Vertex object;
     private IndexedWord action;
     private Set<IndexedWord> decorators = new HashSet<IndexedWord>();
 //    public ActionType type;
@@ -39,7 +39,7 @@ public class Action extends  Relation implements Comparable<Action>{
      * @param action
      * @param type
      */
-    public Action(Character subject, Character object, IndexedWord action, ActionType type){
+    public Action(Vertex subject, Vertex object, IndexedWord action, ActionType type){
         this.subject = subject;
         this.object = object;
         this.action = action;
@@ -47,7 +47,7 @@ public class Action extends  Relation implements Comparable<Action>{
         this.actionId = getActionId();
     }
 
-    public Action(Character subject, Character object, IndexedWord action, List<IndexedWord> decorators){
+    public Action(Vertex subject, Vertex object, IndexedWord action, Collection<IndexedWord> decorators){
         this.subject = subject;
         this.object = object;
         this.action = action;
@@ -61,7 +61,7 @@ public class Action extends  Relation implements Comparable<Action>{
      * @param object
      * @param action
      */
-    public Action(Character subject, Character object, IndexedWord action){
+    public Action(Vertex subject, Vertex object, IndexedWord action){
         this.subject = subject;
         this.object = object;
         this.action = action;
@@ -74,7 +74,7 @@ public class Action extends  Relation implements Comparable<Action>{
      * @param actions
      * @return count
      */
-    public static int countTotalActions(Map<Character,? extends  Collection<Relation>> actions){ //God I hate generics syntax
+    public static int countTotalActions(Map<Vertex,? extends  Collection<Relation>> actions){ //God I hate generics syntax
         int i = 0;
         for (Collection<Relation> set: actions.values()){
             i += set.size();
@@ -88,8 +88,13 @@ public class Action extends  Relation implements Comparable<Action>{
      * @param targetType
      * @return
      */
-    public static int getActionTypeCount(Map<Character,SortedSet<Relation>> actions, ActionType targetType){
+    public static int getActionTypeCount(Map<Vertex,SortedSet<Relation>> actions, ActionType targetType){
         return countTotalActions(getActionsOfType(actions, targetType));
+    }
+
+
+    public Relation makeCopy(Vertex source, Vertex object){
+        return new Action(source,object,this.action,this.decorators);
     }
 
     /**
@@ -98,16 +103,16 @@ public class Action extends  Relation implements Comparable<Action>{
      * @param targetType
      * @return
      */
-    public static Map<Character,SortedSet<Relation>> getActionsOfType(Map<Character, SortedSet<Relation>> actions, ActionType targetType){
-        Map<Character,SortedSet<Relation>> targetActions = new HashMap<Character,SortedSet<Relation>>();
-        for (Map.Entry<Character, SortedSet<Relation>> entry: actions.entrySet()){
+    public static Map<Vertex,SortedSet<Relation>> getActionsOfType(Map<Vertex, SortedSet<Relation>> actions, ActionType targetType){
+        Map<Vertex,SortedSet<Relation>> targetActions = new HashMap<Vertex,SortedSet<Relation>>();
+        for (Map.Entry<Vertex, SortedSet<Relation>> entry: actions.entrySet()){
             SortedSet actionSet = targetActions.get(entry.getKey());
             if (actionSet ==null){
                 actionSet = new TreeSet<Action>();
                 targetActions.put(entry.getKey(),actionSet);
             }
             for (Relation a: entry.getValue()){
-                if (a.type==targetType)
+                if (a.getType()==targetType)
                     actionSet.add(a);
             }
         }
@@ -115,11 +120,11 @@ public class Action extends  Relation implements Comparable<Action>{
     }
 
 
-    public Character getSubject(){
+    public Vertex getSubject(){
         return this.subject;
     }
 
-    public Character getObject(){
+    public Vertex getObject(){
         return this.object;
     }
 
@@ -135,20 +140,20 @@ public class Action extends  Relation implements Comparable<Action>{
         return this.type;
     }
 
-    public double getWeight(){
-        return 1.0;
+    public int getWeight(){
+        return 3;
     }
 
-    public static String prettyPrint(Map<Character,? extends Collection<Relation>> actions){
+    public static String prettyPrint(Map<Vertex,? extends Collection<Relation>> actions){
         if (actions.isEmpty())
             return "None\n";
         StringBuffer sb = new StringBuffer();
-        for (Map.Entry<Character, ? extends  Collection<Relation>> e: actions.entrySet()){
-            Character c = e.getKey();
+        for (Map.Entry<Vertex, ? extends  Collection<Relation>> e: actions.entrySet()){
+            Vertex c = e.getKey();
             Collection<Relation> cActions = e.getValue();
             if (cActions.isEmpty())
                 continue;
-            sb.append("The following actions are associated with character: ").append(c.getName()).append("\n");
+            sb.append("The following actions are associated with vertex: ").append(c.getName()).append("\n");
             for (Relation a: cActions){
                 sb.append("Action: ").append(a.getValue()).append("\n");
             }

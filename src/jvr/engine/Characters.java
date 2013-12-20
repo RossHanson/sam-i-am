@@ -5,12 +5,12 @@ package jvr.engine;
 
 import java.util.*;
 
-import edu.stanford.nlp.trees.EnglishGrammaticalStructure;
+import jvr.graph.Relation;
+import jvr.graph.Vertex;
 import jvr.parser.BasicParserFunctionality;
 import jvr.parser.StanfordParser;
 
 import edu.stanford.nlp.trees.Tree;
-import jvr.parser.TestStory;
 
 //The wicked witch hit the little girl. The evil, wicked wolf likes to bite nice little children. The beautiful princess saved the evil witch.
 /**
@@ -91,134 +91,17 @@ public class Characters {
 	 * @param story
 	 */
 	public void initializeAllCharacters(Tree story){
-		for (Tree subtree : story){
-			if (subtree.label().value().equals("NP")){//extracting all noun phrases to initialize all of the characters.
-				addCharacterToMap(subtree);
-			}
-		}
-		getAllVerbPhrases(story);
-	}
-
-	/**
-	 * For each declarative clause in the Tree "story," finds the subject of the clause (the perpetrator
-	 * of actions), the actions contained within the clause. Then attributes those clauses to 
-	 * Characters that are the direct object of those actions.
-	 * @param story
-	 */
-	public void getAllVerbPhrases(Tree story){
-		String[] verbLabels = {"VB","VBD","VBG","VBN", "VBP","VBZ"};
-		String[] nounLabels = {"NN", "NNS", "NNP", "NNPS"};
-		ArrayList<Tree> receivedActions = new ArrayList<Tree>();
-		ArrayList<Tree> affectedCharacters = new ArrayList<Tree>();
-		Character perpetrator = null;
-		for (Tree subtree : story){
-			if (subtree.label().value().equals("S")){//Simple declarative statement (a complete phrase).
-				for (Tree subSubTree : subtree){
-					if (!subSubTree.parent(story).label().value().equals("VP") && subSubTree.label().value().equals("NP")){//Ignores direct objects, only cares about the subject of the declarative statement.
-						perpetrator = characters.get(Character.findName(subSubTree));
-					}
-					if (subSubTree.label().value().equals("VP")){//the verb phrase in the sentence
-						receivedActions = new ArrayList<Tree>(); //will store all received actions from this subtree.
-						affectedCharacters = new ArrayList<Tree>();
-						for (Tree littleTree : subSubTree){
-							if (BasicParserFunctionality.equalsLabel(littleTree, verbLabels)){//a verb that potentially affects another character.
-
-								receivedActions.add(littleTree);
-							}
-							if (BasicParserFunctionality.equalsLabel(littleTree, nounLabels)){//A direct/indirect object
-//                                for (Tree c: littleTree.children())
-//                                    affectedCharacters.add(c);
-								affectedCharacters.add(littleTree);
-							}
-
-						}
-						if (!affectedCharacters.isEmpty() && !receivedActions.isEmpty() && !(perpetrator==null)){//Someone was actually affected.
-                            for (Tree actionTree: receivedActions){
-                                for (Tree characterTree: affectedCharacters){
-//                                    Action a = new Action(perpetrator,resolveCharacter(characterTree),actionTree,Action.ActionType.NEUTRAL);
-//                                    a.notifyParticipants();
-                                }
-                            }
-//							manageAffectedCharacters(affectedCharacters, receivedActions, perpetrator.getName());
-						}
-
-					}
-					if (!(perpetrator==null)&&!(receivedActions==null)){//Add the subject's actions to their action set.
-						perpetrator.updateCharacter(null, receivedActions);
-						receivedActions = null;//Remove previously used actions for the next character.
-					}
-				}
-			}
-		}
+//		for (Tree subtree : story){
+//			if (subtree.label().value().equals("NP")){//extracting all noun phrases to initialize all of the characters.
+//				addCharacterToMap(subtree);
+//			}
+//		}
+//		getAllVerbPhrases(story);
 	}
 
 
-	/**
-	 * Either adds the character to the map charactersAndSentiments if it is not
-	 * already in that map, or updates the character with newly found information
-	 * if it is already in the map.
-	 * @param nounPhrase
-	 */
-	public void addCharacterToMap (Tree nounPhrase){
-		String characterName = Character.findName(nounPhrase);
-		if (!(characterName==null)){
-            if (characters.containsKey(characterName)){ //Have already recorded this character
-				characters.get(characterName).updateCharacter(nounPhrase, null);
-				characters.get(characterName).incrementOccurrences();
-			}else{
-				Character personaje = new Character(nounPhrase);
-				characters.put(personaje.getName(), personaje);
-			}
-		}
-	}
 
-    public Character resolveCharacter(Tree nounPhrase){
-        String characterName = Character.findName(nounPhrase);
-        if (characterName == null){
-            System.err.println("Error! Could not resolve character name for " + nounPhrase.value());
-            return null; //Probably should throw an exception....
-        }
-        Character c;
-        if (characters.containsKey(characterName)){
-            c =  characters.get(characterName);
-        } else {
-            c = new Character(nounPhrase);
-            characters.put(c.getName(), c);
-        }
-        return c;
-    }
 
-	/**
-	 * The beginning of an effort to incorporate relationships between
-	 * the status of protagonists and antagonists in the story. Unfinished.
-	 */
-	public void twoNegativesMakeAPositive (){
-		for (Character personnage : characters.values()){
-			Map<Character, SortedSet<Relation>> negativeActions= personnage.getNegativeReceivedActions();
-			Character perpetrator;
-			SortedSet<Relation> actions;
-			for (Character perp : negativeActions.keySet()){
-				perpetrator = characters.get(perp);
-				actions = negativeActions.get(perp);
-				for (Relation act : actions){
-					System.out.println("act: "+act);
-					if (personnage.getProbAntagonist()>personnage.getProbProtagonist()){
-							perpetrator.moveNegativeActionToPositive(act);
-					}
-					//TODO: Maybe even somehow incorporate just how large the difference between probProtagonist and probAntagonist is.
-					/* How we can deal with interpreting actions: 
-					 * If they do something good to a good character, that action 
-					 * will remain in the set of positive verbs. If they do something
-					 * bad to a good character, that verb will be added to the set of 
-					 * negative verbs. If they do something bad to a bad character,
-					 * that verb will be added to the set of positive verbs. If they do something good to a bad character, 
-					 * things get a bit murky. This might have to be determined with
-					 * more testing. On one hand, this person might just be a very good
-					 * person who is helping another in spite of their "badness." On the 
-					 * other hand, the character might just be doing something wrong.
-					 */
-				}
-			}
-		}
-	}
+
+
 }

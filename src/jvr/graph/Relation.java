@@ -1,4 +1,7 @@
-package jvr.engine;
+package jvr.graph;
+
+import jvr.engine.Action;
+import jvr.engine.Character;
 
 /**
  * Created with IntelliJ IDEA.
@@ -9,15 +12,16 @@ package jvr.engine;
  */
 public abstract class Relation {
 
-    protected  Character subject;
-    protected  Character object;
+    protected Vertex subject;
+    protected Vertex object;
     protected Action.ActionType type;
 
-    public abstract Character getSubject();
-    public abstract Character getObject();
+    public abstract Vertex getSubject();
+    public abstract Vertex getObject();
     public abstract Action.ActionType getType();
     public abstract String getValue();
-    public abstract double getWeight();
+    public abstract int getWeight();
+    public abstract Relation makeCopy(Vertex subject, Vertex object);
 
 
     public void notifyParticipants(){

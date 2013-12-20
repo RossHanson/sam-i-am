@@ -3,6 +3,10 @@ package jvr.engine;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
+import jvr.graph.ArtificialEdge;
+import jvr.graph.Graph;
+import jvr.graph.Relation;
+import jvr.graph.Vertex;
 
 import java.util.*;
 
@@ -13,12 +17,14 @@ import java.util.*;
  * Time: 3:07 AM
  * To change this template use File | Settings | File Templates.
  */
-public class SingleSentenceGraph {
+public class SingleSentenceGraph extends Graph {
 
     private Map<IndexedWord, Character> characterMap = new HashMap<IndexedWord,Character>();
-    private Set<Relation> actionSet = new HashSet<Relation>();
+    private Set<Relation> edges = new HashSet<Relation>();
 
     public SingleSentenceGraph(SemanticGraph sg){
+        edges = new HashSet<Relation>();
+        vertices = characterMap.values();
         Map<IndexedWord, List<Character>> verbSubjectMap = new HashMap<IndexedWord,List<Character>>();
         Map<IndexedWord, List<Character>> verbObjectMap = new HashMap<IndexedWord,List<Character>>();
         Map<IndexedWord, List<Character>> copVerbMap = new HashMap<IndexedWord, List<Character>>();
@@ -43,21 +49,23 @@ public class SingleSentenceGraph {
             }
             for (Character subject: subjects){
                 for (Character object: objects){
-                    actionSet.add(new Action(subject,object,verb));
+                    Action newAction = new Action(subject, object, verb);
+                    edges.add(newAction);
+                    newAction.notifyParticipants();
                 }
             }
 
         }
         for (Map.Entry<IndexedWord,List<Character>> entry: copVerbMap.entrySet()){
             List<Character> chars = entry.getValue();
-            actionSet.add(new Action(chars.get(0),chars.get(1),entry.getKey())); //Not sure what to do for more than one equivalence;
+            edges.add(new Action(chars.get(0), chars.get(1), entry.getKey())); //Not sure what to do for more than one equivalence;
         }
         System.out.println("Finished building single sentence graph| Character set size: " + characterMap.size());
     }
 
-    private SingleSentenceGraph(Map<IndexedWord,Character> characterMap, Set<Relation> actionSet){
+    private SingleSentenceGraph(Map<IndexedWord,Character> characterMap, Set<Relation> edges){
         this.characterMap = characterMap;
-        this.actionSet = actionSet;
+        this.edges = edges;
     }
 
     /**
@@ -123,32 +131,37 @@ public class SingleSentenceGraph {
 
     public String toString(){
         StringBuilder sb = new StringBuilder();
-        for(Relation a: actionSet)
+        for(Relation a: edges)
             sb.append("Action:\n").append(a.toString()).append("\n");
         return sb.toString();
     }
 
-    public static SingleSentenceGraph mergeGraphs(SingleSentenceGraph g1, SingleSentenceGraph g2){
-        Map<IndexedWord,Character> characterMap = new HashMap<IndexedWord,Character>();
-        Set<Relation> actionSet = new HashSet<Relation>();
+    public static List<ArtificialEdge> mergeGraphs(SingleSentenceGraph g1, SingleSentenceGraph g2){
+        List<ArtificialEdge> equivalenceSet = new LinkedList<ArtificialEdge>();
         for (Map.Entry<IndexedWord,Character> e1 : g1.characterMap.entrySet()){
             for (Map.Entry<IndexedWord,Character> e2: g2.characterMap.entrySet()){
                 Character c1 = e1.getValue();
                 Character c2 = e2.getValue();
                 System.out.print("Considering " + c1.getName() + " equals " + c2.getName() + " ??? ");
                 if (c1.isSameCharacter(c2)){
-                    actionSet.add(new ArtificialEdge(c1,c2));
+                    equivalenceSet.add(new ArtificialEdge(c1,c2));
                     System.out.println(" YES" );
                 } else {
                     System.out.println(" NO ");
                 }
-                characterMap.put(e2.getKey(), e2.getValue());
             }
-            characterMap.put(e1.getKey(),e1.getValue());
         }
-        actionSet.addAll(g1.actionSet);
-        actionSet.addAll(g2.actionSet);
-        return new SingleSentenceGraph(characterMap,actionSet);
+        return equivalenceSet;
+    }
+
+    @Override
+    public Collection<? extends Vertex> getVertices(){
+        return characterMap.values();
+    }
+
+    @Override
+    public Set<Relation> getEdges(){
+        return edges;
     }
 
 
