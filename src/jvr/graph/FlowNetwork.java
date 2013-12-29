@@ -16,6 +16,7 @@ public class FlowNetwork extends Graph {
     private Map<Vertex,FlowNode> nodeMapping;
 
     private int[][] capacityMatrix;
+    public int[][] mostRecentFlow;
 
     private int vertCount;
 
@@ -108,6 +109,7 @@ public class FlowNetwork extends Graph {
         this.nodeMapping = nodeMapping;
         this.vertCount = capacityMatrix[0].length;
         this.nodeIdMap = nodeIdMap;
+        this.mostRecentFlow = makeArray(vertCount,vertCount,0);
     }
 
     public int[][] findMaxFlow(Vertex source, Vertex sink){
@@ -134,11 +136,64 @@ public class FlowNetwork extends Graph {
             }
         }
         System.out.println("Total flow: " + totalFlow);
+        this.mostRecentFlow = flowMatrix;
         return flowMatrix;
     }
 
     public static void visualize(FlowNetwork fn){
         visualize(fn.capacityMatrix);
+    }
+
+    public static FlowNetwork[] getMinCut(FlowNetwork fn, int[][] flow, Vertex source){
+        return getMinCut(fn,flow, fn.nodeMapping.get(source).getId());
+    }
+
+    public static FlowNetwork[] getMinCut(FlowNetwork fn, int[][] flow, int source){
+        int vertCount = flow[0].length;
+        boolean[] reachable = depthFirstSearch(fn,flow,source);
+
+        int[][] sCap = new int[vertCount][vertCount];
+        int[][] tCap = new int[vertCount][vertCount];
+
+        for (int i =0;i<vertCount;i++){
+            for (int j=0;j<vertCount;j++){
+                if (reachable[i] && reachable[j]){
+                    sCap[i][j] = fn.capacityMatrix[i][j];
+                    tCap[i][j] = 0;
+                } else if (!reachable[i] && !reachable[j]){
+                    sCap[i][j] = 0;
+                    tCap[i][j] = fn.capacityMatrix[i][j];
+                } else {
+                    sCap[i][j] = 0;
+                    tCap[i][j] = 0;
+                }
+            }
+        }
+        FlowNetwork[] stNetworks = new FlowNetwork[2];
+        stNetworks[0] = new FlowNetwork(sCap,fn.nodeMapping,fn.nodeIdMap);
+        stNetworks[1] = new FlowNetwork(tCap,fn.nodeMapping,fn.nodeIdMap);
+        return stNetworks;
+    }
+
+    public static boolean[] depthFirstSearch(FlowNetwork fn, int[][] flow, int source) {
+        int vertCount = flow[0].length;
+        Stack<Integer> fringe = new Stack<Integer>();
+
+        boolean[] seen = new boolean[vertCount];
+
+        fringe.push(source);
+        while (!fringe.isEmpty()){
+            int target = fringe.pop();
+            for (int i =0;i<vertCount;i++){
+                if (seen[i])
+                    continue;
+                if (fn.capacityMatrix[target][i]-flow[target][i]==0)
+                    continue;
+                seen[i] = true;
+                fringe.push(i);
+            }
+        }
+        return seen;
     }
 
     public static void visualize(int[][] network){
@@ -189,6 +244,7 @@ public class FlowNetwork extends Graph {
     private static class FlowNode {
 
         private Vertex root;
+
 
         int id;
 

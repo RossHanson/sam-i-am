@@ -13,11 +13,10 @@ import edu.stanford.nlp.trees.TreeCoreAnnotations;
 import edu.stanford.nlp.util.CoreMap;
 import jvr.content.RawStory;
 import jvr.graph.*;
-import jvr.parser.ParsedStory;
-import jvr.parser.StanfordParser;
-import jvr.parser.StoryParser;
-import jvr.parser.TestStory;
+import jvr.parser.*;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -89,7 +88,7 @@ public class Engine {
     }
 
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         TestStory story = new TestStory("Test Story", "");
         story.addSentence("The evil robber killed the bank. ");
         story.addSentence("Superman chased the robber. ");
@@ -98,13 +97,33 @@ public class Engine {
         story.addSentence("In jail, the robber made new friends. ");
         story.addSentence("The robber and his friends played a lot of basketball. ");
         story.addSentence("The robber and his friends also ate food. ");
-        System.out.println("Story is: " + story.getContents());
+
+        RawFileStory fileStory = new RawFileStory("sallyAndSammy.txt");
+        System.out.println("Story is: " + fileStory.getContents());
+
         Engine e = new Engine();
         File flowOut = new File("/home/ross/Dropbox/CS4701/flow.csv");
-        FlowNetwork fn = e.runFlowAnalysis(story.getContents(),flowOut );
+        FlowNetwork[] graphs = e.runFlowAnalysis(fileStory.getContents(),flowOut );
+
         File capacityOut = new File("/home/ross/Dropbox/CS4701/capacity.csv");
         PrintStream ps = new PrintStream(capacityOut);
-        fn.printStructure(ps);
+        graphs[0].printStructure(ps);
+
+        System.out.println("S cut");
+        FlowNetwork.visualize(graphs[1]);
+
+        System.out.println("T cut");
+        FlowNetwork.visualize(graphs[2]);
+
+        File sOut = new File("/home/ross/Dropbox/CS4701/sCut.csv");
+        File tOut = new File("/home/ross/Dropbox/CS4701/tCut.csv");
+        PrintStream sPs = new PrintStream(sOut);
+        graphs[1].printStructure(sPs);
+        sPs.close();
+        PrintStream tPs = new PrintStream(tOut);
+        graphs[2].printStructure(tPs);
+        tPs.close();
+
         ps.close();
 
 
@@ -204,15 +223,24 @@ public class Engine {
         return g;
     }
 
-    public FlowNetwork runFlowAnalysis(String story, File outputFile) throws FileNotFoundException {
+    public FlowNetwork[] runFlowAnalysis(String story, File outputFile) throws FileNotFoundException {
+        int k = 6;
         SingleSentenceGraph[] graphs = parseSentences(story); //Build sentence graphs
-        List<ArtificialEdge> eqs = findKEquivalence(graphs, 3); //Run k-collapse
+        List<ArtificialEdge> eqs = findKEquivalence(graphs, k); //Run k-collapse
         List<Relation> newActions = buildCoreferences(eqs); //Find co-references across the graphs
 
         Collection<Vertex> globalCharacters = combineCharacterList(graphs); //Put all the characters together
 
-        Vertex source = Graph.createSpannerGraph(graphs[0], newActions,"Source");//Create source and sink nodes
-        Vertex sink = Graph.createSpannerGraph(graphs[graphs.length-1],newActions,"Sink");  //"" ""
+        SingleSentenceGraph[] firstK = new SingleSentenceGraph[k];
+        SingleSentenceGraph[] lastK = new SingleSentenceGraph[k];
+        for (int i =0;i<k;i++){
+            firstK[i] = graphs[i]; //Span first and last k sentences for sink
+            lastK[i] = graphs[graphs.length-1-i];
+        }
+
+
+        Vertex source = Graph.createSpannerGraph(combineCharacterList(firstK), newActions,"Source");//Create source and sink nodes
+        Vertex sink = Graph.createSpannerGraph(combineCharacterList(lastK),newActions,"Sink");  //"" ""
 
         globalCharacters.add(source); //include in character list
         globalCharacters.add(sink); // "" ""
@@ -224,8 +252,10 @@ public class Engine {
         int[][] flowGraph = fn.findMaxFlow(source,sink);
         PrintStream ps = new PrintStream(outputFile);
         fn.printStructure(ps,flowGraph);
-
-        return fn;
+        FlowNetwork[] stGraphs = FlowNetwork.getMinCut(fn,fn.mostRecentFlow,source);
+        FlowNetwork[] returns = new FlowNetwork[3];
+        returns[0] = fn; returns[1] = stGraphs[0]; returns[2] = stGraphs[1];
+        return returns;
     }
 
 

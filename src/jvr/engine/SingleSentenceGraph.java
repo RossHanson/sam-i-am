@@ -58,6 +58,10 @@ public class SingleSentenceGraph extends Graph {
         }
         for (Map.Entry<IndexedWord,List<Character>> entry: copVerbMap.entrySet()){
             List<Character> chars = entry.getValue();
+            if (chars.size()<2){
+                System.err.println("Uh oh, couldn't find enough cops for: " + entry.getKey().lemma());
+                continue;
+            }
             edges.add(new Action(chars.get(0), chars.get(1), entry.getKey())); //Not sure what to do for more than one equivalence;
         }
         System.out.println("Finished building single sentence graph| Character set size: " + characterMap.size());

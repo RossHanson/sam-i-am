@@ -27,8 +27,8 @@ public abstract class Graph {
     }
 
 
-    public static Vertex createSpannerGraph(Graph g, Collection<Relation> artificialEdges, String vertexName){
-        Collection<? extends Vertex> verts = g.getVertices();
+    public static Vertex createSpannerGraph(Collection<? extends  Vertex> verts, Collection<Relation> artificialEdges, String vertexName){
+//        Collection<? extends Vertex> verts = g.getVertices();
 
         Vertex spanner = new TestVertex(vertexName);
         for (Vertex v: verts)

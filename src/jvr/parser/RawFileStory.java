@@ -10,6 +10,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,20 +29,11 @@ public class RawFileStory extends RawStory {
 
     public RawFileStory(String filename) throws IOException, ParserConfigurationException, SAXException {
         File storyFile = new File(filename);
-        DocumentBuilder db = dbFactory.newDocumentBuilder();
-        Document dom = db.parse(storyFile);
-
-        Element contentEl = dom.getElementById(CONTENT_ELEMENT_NAME);
-        Element titleEl = dom.getElementById(TITLE_ELEMENT_NAME);
-
-        if (contentEl==null){
-            throw new IOException("Improperly formatted file");
+        Scanner in = new Scanner(storyFile);
+        contents = "";
+        while(in.hasNext()){
+            contents = contents + in.nextLine();
         }
-
-        if (titleEl!=null){
-            contents = titleEl.getTextContent();
-        }
-
     }
 
     public String getTitle(){
